@@ -1,7 +1,6 @@
 #lang racket
-;(require "define_token.rkt")
 
-
+(provide (all-defined-out))
 ;;;;;;;;;;;;; Lex Program ;;;;;;;;;;;;
 ;;;; source code(string) to token ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -117,11 +116,11 @@
 ;;; List supported keyword
 (define-token keyword
   (my-if "if")
-  (my-let "let"))
+  (my-let "let")
+  (my-struct "struct"))
 
 
-(define f "let a = 3 in let b = 4 in let c = 5")
-(define w (simple-scanner (string->list f)))
-(define rr (tokenization w keyword))
-
-(check-token rr)
+;(define f "let a = 3 in let b = 4 in let c = 5")
+;(define w (simple-scanner (string->list f)))
+;(define rr (tokenization w keyword))
+;(check-token rr)
