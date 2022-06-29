@@ -1,5 +1,5 @@
 #lang racket
-
+(require (for-syntax racket/syntax))
 (provide (all-defined-out))
 ;;;;;;;;;;;;; Lex Program ;;;;;;;;;;;;
 ;;;; source code(string) to token ;;;;
@@ -67,7 +67,8 @@
 
 ;;; token := kind * string
 (struct token (kind string))
-
+(struct int ())
+(struct unknown ())
 ;;; tokenization : Listof(Char) -> Listof(token)
 (define tokenization
   (lambda (string-list table)
@@ -82,24 +83,29 @@
                           (cons (token "identifier" (list->string h))
                                 (tokenization (cdr string-list) table))))]
                    [(isInteger? (car h))
-                    (cons (token "int" (list->string h))
+                    (cons (token (int) (list->string h))
                           (tokenization (cdr string-list) table))]
-                   [else (cons (token "unknown" (list->string h))
+                   [else (cons (token (unknown) (list->string h))
                                (tokenization (cdr string-list) table))]))])))
 
 ;;; define-token
 (define-syntax (define-token stx)
   (syntax-case stx ()
     [(_ name a ...)
-     #`(begin
-         (define name
-           '())
-         #,@(for/list ([x (syntax->list #'(a ...))])
-              (with-syntax ((t-name (car (syntax->list x)))
-                            (t-val (cadr (syntax->list x))))
-                #`(begin (struct t-name ())
-                         (set! name (cons (cons t-val t-name)
-                                          name))))))]))
+     (with-syntax ([pred-id (format-id #'name "~a?" #'name)])
+       #`(begin
+           (define name
+             '())
+           (define pred-id
+             '())  
+           #,@(for/list ([x (syntax->list #'(a ...))])
+                (with-syntax* ((t-name (car (syntax->list x)))
+                               (t-val (cadr (syntax->list x)))
+                               (t-pred (format-id #'t-name "~a?" #'t-name)))
+                  #`(begin (struct t-name ())
+                           (set! name (cons (cons t-val (t-name))
+                                            name))
+                           (set! pred-id (cons t-pred pred-id)))))))]))
 
 ;;; check-token : Listof(token) -> void
 (define check-token
@@ -113,11 +119,7 @@
            (check-token (cdr a))])))
 
 
-;;; List supported keyword
-(define-token keyword
-  (my-if "if")
-  (my-let "let")
-  (my-struct "struct"))
+
 
 
 ;(define f "let a = 3 in let b = 4 in let c = 5")
